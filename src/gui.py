@@ -1,30 +1,104 @@
 import tkinter as tk
 import random
 import time
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class ReactionTimeApp:
     def __init__(self, master):
         self.master = master
         self.master.title("Reaction Time Tester")
-        self.label = tk.Label(master, text="Press the button when it turns green!")
-        self.label.pack()
-        self.button = tk.Button(master, text="Start", command=self.start_test)
-        self.button.pack()
+
+        # Initialize variables
         self.start_time = None
+        self.reaction_times = []
+        self.num_trials = 5
+        self.current_trial = 0
 
-    def start_test(self):
-        self.label.config(text="Get ready...")
+        # Create UI elements
+        self.label = tk.Label(master, text="Choose the number of trials and press Start!", font=("Arial", 14))
+        self.label.pack(pady=10)
+
+        self.trials_entry = tk.Entry(master)
+        self.trials_entry.insert(0, "5")
+        self.trials_entry.pack(pady=5)
+
+        self.start_button = tk.Button(master, text="Start", command=self.start_game)
+        self.start_button.pack(pady=10)
+
+        self.canvas_frame = tk.Frame(master)
+        self.canvas_frame.pack()
+
+        # Matplotlib figure for real-time plotting
+        self.figure = Figure(figsize=(5, 3), dpi=100)
+        self.ax = self.figure.add_subplot(111)
+        self.ax.set_title("Reaction Times")
+        self.ax.set_xlabel("Trial")
+        self.ax.set_ylabel("Time (s)")
+        self.line, = self.ax.plot([], [], marker="o")
+
+        self.canvas = FigureCanvasTkAgg(self.figure, self.canvas_frame)
+        self.canvas.get_tk_widget().pack()
+
+    def start_game(self):
+        try:
+            self.num_trials = int(self.trials_entry.get())
+        except ValueError:
+            self.label.config(text="Please enter a valid number of trials.")
+            return
+
+        self.reaction_times = []
+        self.current_trial = 0
+        self.label.config(text="Get ready for the first trial!")
+        self.master.after(1000, self.start_trial)
+
+    def start_trial(self):
+        self.label.config(text="Wait for green...", bg="red")
         self.master.update()
-        time.sleep(random.randint(2, 5))
-        self.label.config(text="Now!")
-        self.button.config(bg="green")
-        self.start_time = time.time()
-        self.button.bind("<Button-1>", self.stop_test)
+        delay = random.randint(2000, 5000)  # Random delay between 2-5 seconds
+        self.master.after(delay, self.show_green)
 
-    def stop_test(self, event):
+    def show_green(self):
+        self.label.config(text="Click now!", bg="green")
+        self.start_time = time.time()
+        self.master.bind("<Button-1>", self.record_reaction_time)
+
+    def record_reaction_time(self, event):
         if self.start_time is None:
             return
+
         reaction_time = time.time() - self.start_time
-        self.label.config(text=f"Your reaction time is {reaction_time:.3f} seconds.")
-        self.button.config(bg="SystemButtonFace")
+        self.reaction_times.append(reaction_time)
         self.start_time = None
+
+        # Update plot
+        self.update_plot()
+
+        # Display stats
+        best_time = min(self.reaction_times)
+        worst_time = max(self.reaction_times)
+        avg_time = sum(self.reaction_times) / len(self.reaction_times)
+        self.label.config(text=(
+            f"Trial {self.current_trial + 1}/{self.num_trials}\n"
+            f"Reaction Time: {reaction_time:.3f}s\n"
+            f"Best: {best_time:.3f}s, Worst: {worst_time:.3f}s, Avg: {avg_time:.3f}s"
+        ), bg="SystemButtonFace")
+
+        self.current_trial += 1
+        if self.current_trial < self.num_trials:
+            self.master.after(2000, self.start_trial)
+        else:
+            self.label.config(text="Game Over! Thanks for playing.")
+            self.master.unbind("<Button-1>")
+
+    def update_plot(self):
+        self.ax.clear()
+        self.ax.set_title("Reaction Times")
+        self.ax.set_xlabel("Trial")
+        self.ax.set_ylabel("Time (s)")
+        self.ax.plot(range(1, len(self.reaction_times) + 1), self.reaction_times, marker="o")
+        self.canvas.draw()
+
+root = tk.Tk()
+app = ReactionTimeApp(root)
+root.mainloop()
