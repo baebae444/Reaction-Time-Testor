@@ -12,6 +12,7 @@ class ReactionTimeApp:
         # Initialize variables
         self.start_time = None
         self.reaction_times = []
+        self.all_reaction_times = []  # New attribute to store all reaction times across games
         self.num_trials = 5
         self.current_trial = 0
 
@@ -40,6 +41,10 @@ class ReactionTimeApp:
         self.canvas = FigureCanvasTkAgg(self.figure, self.canvas_frame)
         self.canvas.get_tk_widget().pack()
 
+        # Trial information label
+        self.trial_info_label = tk.Label(master, text="", font=("Arial", 12))
+        self.trial_info_label.pack(anchor="nw", padx=10, pady=10)
+
     def start_game(self):
         try:
             self.num_trials = int(self.trials_entry.get())
@@ -47,7 +52,8 @@ class ReactionTimeApp:
             self.label.config(text="Please enter a valid number of trials.")
             return
 
-        self.reaction_times = []
+        self.all_reaction_times.extend(self.reaction_times)  # Save previous game's reaction times
+        self.reaction_times = []  # Reset for the new game
         self.current_trial = 0
         self.label.config(text="Get ready for the first trial!")
         self.master.after(1000, self.start_trial)
@@ -84,6 +90,9 @@ class ReactionTimeApp:
             f"Best: {best_time:.3f}s, Worst: {worst_time:.3f}s, Avg: {avg_time:.3f}s"
         ), bg="SystemButtonFace")
 
+        # Update trial information
+        self.update_trial_info(self.current_trial + 1)
+
         self.current_trial += 1
         if self.current_trial < self.num_trials:
             self.master.after(2000, self.start_trial)
@@ -96,8 +105,12 @@ class ReactionTimeApp:
         self.ax.set_title("Reaction Times")
         self.ax.set_xlabel("Trial")
         self.ax.set_ylabel("Time (s)")
-        self.ax.plot(range(1, len(self.reaction_times) + 1), self.reaction_times, marker="o")
+        self.ax.plot(range(1, len(self.all_reaction_times) + len(self.reaction_times) + 1),
+                     self.all_reaction_times + self.reaction_times, marker="o")  # Plot all reaction times
         self.canvas.draw()
+
+    def update_trial_info(self, trial_number):
+        self.trial_info_label.config(text=f"Trial: {trial_number}\nAll Reaction Times: {', '.join(f'{t:.3f}s' for t in self.all_reaction_times + self.reaction_times)}")
 
 root = tk.Tk()
 app = ReactionTimeApp(root)
