@@ -45,6 +45,38 @@ class ReactionTimeApp:
         self.trial_info_label = tk.Label(master, text="", font=("Arial", 12))
         self.trial_info_label.pack(anchor="nw", padx=10, pady=10)
 
+        # Create a frame for bottom information
+        self.bottom_frame = tk.Frame(master)
+        self.bottom_frame.pack(side=tk.BOTTOM, pady=10)
+
+        # Bottom labels for reaction test information
+        self.best_label = tk.Label(self.bottom_frame, text="Best: N/A", font=("Arial", 12))
+        self.best_label.pack(side=tk.LEFT, padx=10)
+
+        self.worst_label = tk.Label(self.bottom_frame, text="Worst: N/A", font=("Arial", 12))
+        self.worst_label.pack(side=tk.LEFT, padx=10)
+
+        self.avg_label = tk.Label(self.bottom_frame, text="Avg: N/A", font=("Arial", 12))
+        self.avg_label.pack(side=tk.LEFT, padx=10)
+
+        # Create a frame for middle information
+        self.middle_frame = tk.Frame(master)
+        self.middle_frame.pack(side=tk.BOTTOM, pady=10)
+
+        # Middle labels for trial count and reaction time
+        self.trial_count_label = tk.Label(self.middle_frame, text="Trial: N/A", font=("Arial", 12))
+        self.trial_count_label.pack(side=tk.LEFT, padx=10)
+
+        self.reaction_time_label = tk.Label(self.middle_frame, text="Reaction Time: N/A", font=("Arial", 12))
+        self.reaction_time_label.pack(side=tk.LEFT, padx=10)
+
+        # Remove the trial count and reaction time labels from the left
+        self.trial_info_label.pack_forget()
+
+        # Ensure only the middle frame displays trial count and reaction time
+        self.trial_count_label.config(text="Trial: N/A")
+        self.reaction_time_label.config(text="Reaction Time: N/A")
+
     def start_game(self):
         try:
             self.num_trials = int(self.trials_entry.get())
@@ -84,11 +116,16 @@ class ReactionTimeApp:
         best_time = min(self.reaction_times)
         worst_time = max(self.reaction_times)
         avg_time = sum(self.reaction_times) / len(self.reaction_times)
-        self.label.config(text=(
-            f"Trial {self.current_trial + 1}/{self.num_trials}\n"
-            f"Reaction Time: {reaction_time:.3f}s\n"
-            f"Best: {best_time:.3f}s, Worst: {worst_time:.3f}s, Avg: {avg_time:.3f}s"
-        ), bg="SystemButtonFace")
+        self.label.config(text="", bg="SystemButtonFace")  # Remove reaction information from the top label
+
+        # Update bottom labels
+        self.best_label.config(text=f"Best: {min(self.reaction_times):.3f}s")
+        self.worst_label.config(text=f"Worst: {max(self.reaction_times):.3f}s")
+        self.avg_label.config(text=f"Avg: {sum(self.reaction_times) / len(self.reaction_times):.3f}s")
+
+        # Update middle labels
+        self.trial_count_label.config(text=f"Trial: {self.current_trial + 1}")
+        self.reaction_time_label.config(text=f"Reaction Time: {reaction_time:.3f}s")
 
         # Update trial information
         self.update_trial_info(self.current_trial + 1)
